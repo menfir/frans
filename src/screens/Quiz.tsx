@@ -12,9 +12,11 @@ import {
 } from '../leitner'
 import { canListen, listen, speak } from '../speech'
 
-/** Taal van de vraag, en dus ook van het verwachte antwoord in de andere richting. */
-const langOf = (dir: Item['dir'], side: 'vraag' | 'antwoord') =>
-  (dir === 'frnl') === (side === 'vraag') ? 'fr-FR' : 'nl-BE'
+/** Taal waarin het antwoord verwacht wordt — alleen voor de spraakherkenning. */
+const answerLang = (dir: Dir) => (dir === 'frnl' ? 'nl-BE' : 'fr-FR')
+
+// Voorlezen doen we uitsluitend voor het Franse woord, en dat is altijd card.fr:
+// bij FR→NL is dat de vraag, bij NL→FR het antwoord.
 
 const FEEDBACK: Record<Grade, { titel: string; klasse: string }> = {
   goed: { titel: 'Juist!', klasse: 'bg-emerald-100 text-emerald-900' },
@@ -59,6 +61,12 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
     if (item && item.dir === 'frnl') speak(item.card.fr, 'fr-FR')
     return () => stopListening.current()
   }, [item])
+
+  // Bij NL→FR zit het Franse woord in het antwoord. Spreek het uit zodra dat getoond
+  // wordt: hij moet de uitspraak horen, zeker als hij ze nog niet kende.
+  useEffect(() => {
+    if (result && item?.dir === 'nlfr') speak(item.card.fr, 'fr-FR')
+  }, [result, item])
 
   if (!item) {
     return (
@@ -107,7 +115,7 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
     setMicFout('')
     setLuistert(true)
     stopListening.current = listen(
-      langOf(item.dir, 'antwoord'),
+      answerLang(item.dir),
       (alternatieven) => {
         setLuistert(false)
         // Neem het alternatief dat het best scoort — één treffer volstaat.
@@ -155,20 +163,35 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
         </p>
         <div className="flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold break-words">{question(item)}</h1>
-          <button
-            onClick={() => speak(question(item), langOf(item.dir, 'vraag'))}
-            className="text-2xl text-slate-400"
-            aria-label="Voorlezen"
-          >
-            🔊
-          </button>
+          {/* Alleen als de vraag Frans is; het Nederlandse woord voorlezen heeft geen nut. */}
+          {item.dir === 'frnl' && (
+            <button
+              onClick={() => speak(item.card.fr, 'fr-FR')}
+              className="text-2xl text-slate-400"
+              aria-label="Franse woord voorlezen"
+            >
+              🔊
+            </button>
+          )}
         </div>
       </div>
 
       {result ? (
         <div className={`mb-4 rounded-xl p-4 text-center ${FEEDBACK[result.g].klasse}`}>
           <p className="text-lg font-semibold">{FEEDBACK[result.g].titel}</p>
-          <p className="mt-1 text-2xl font-bold">{juist}</p>
+          <div className="mt-1 flex items-center justify-center gap-2">
+            <p className="text-2xl font-bold">{juist}</p>
+            {/* Bij NL→FR is dit het Franse woord: laat hem de uitspraak herhalen. */}
+            {item.dir === 'nlfr' && (
+              <button
+                onClick={() => speak(item.card.fr, 'fr-FR')}
+                className="text-xl opacity-60"
+                aria-label="Franse woord voorlezen"
+              >
+                🔊
+              </button>
+            )}
+          </div>
           {result.g !== 'goed' && (
             <p className="mt-1 text-sm opacity-75">jij zei: {result.gegeven}</p>
           )}

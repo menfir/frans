@@ -27,6 +27,30 @@ describe('rendering', () => {
     expect(html).toContain('Niets te oefenen')
   })
 
+  it('biedt voorlezen aan bij een Franse vraag', () => {
+    const html = renderToString(
+      <Quiz
+        cards={[newCard('la maison', 'het huis', '2026-W36')]}
+        onAnswer={() => {}}
+        onExit={() => {}}
+      />,
+    )
+    expect(html).toContain('la maison')
+    expect(html).toContain('voorlezen')
+  })
+
+  it('biedt geen voorlezen aan bij een Nederlandse vraag', () => {
+    // frnl al geoefend en nog niet vervallen, dus alleen NL→FR komt aan bod
+    const card = newCard('la maison', 'het huis', '2026-W36')
+    card.box.frnl = 3
+    card.due.frnl = Date.now() + 5 * 86_400_000
+
+    const html = renderToString(<Quiz cards={[card]} onAnswer={() => {}} onExit={() => {}} />)
+    expect(html).toContain('Nederlands → Frans')
+    expect(html).toContain('het huis')
+    expect(html).not.toContain('voorlezen') // het Franse woord staat pas in het antwoord
+  })
+
   it('laat toch oefenen als alles op schema zit', () => {
     const card = newCard('la maison', 'het huis', '2026-W36')
     card.box = { frnl: 5, nlfr: 5 }
