@@ -15,12 +15,14 @@ export const parseList = (text: string): Pair[] =>
 
 type Props = {
   cards: Card[]
+  /** Tekst die vanuit een andere app gedeeld is; vult het tekstvak meteen in. */
+  initialText?: string
   onAdd: (pairs: Pair[], week: string) => void
   onCancel: () => void
 }
 
-export default function Import({ cards, onAdd, onCancel }: Props) {
-  const [text, setText] = useState('')
+export default function Import({ cards, initialText = '', onAdd, onCancel }: Props) {
+  const [text, setText] = useState(initialText)
   const [week, setWeek] = useState(currentWeek())
   // Bewerkbare regels: OCR van Google Lens is nooit schoon, dus je moet kunnen corrigeren.
   const [edits, setEdits] = useState<Pair[] | null>(null)
@@ -43,11 +45,16 @@ export default function Import({ cards, onAdd, onCancel }: Props) {
         <h1 className="text-2xl font-bold">Woorden toevoegen</h1>
       </div>
 
-      <p className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-slate-700">
-        Maak een foto van het lijstje met <strong>Google Lens</strong>, kopieer de tekst en plak
-        ze hieronder. Eén woordpaar per regel, gescheiden door <code>=</code>, een tab of twee
-        spaties.
-      </p>
+      <div className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-slate-700">
+        <p className="mb-2">
+          Maak een foto van het lijstje met <strong>Google Lens</strong>, selecteer de tekst en
+          kies <strong>Delen → Frans oefenen</strong>. De tekst komt dan hier vanzelf terecht.
+        </p>
+        <p>
+          Kopiëren en hieronder plakken werkt ook. Eén woordpaar per regel, gescheiden door{' '}
+          <code>=</code>, een tab of twee spaties.
+        </p>
+      </div>
 
       <label className="mb-1 block text-sm font-medium text-slate-600">Week</label>
       <input

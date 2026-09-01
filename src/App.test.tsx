@@ -4,7 +4,26 @@ import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import App from './App'
 import { newCard } from './leitner'
+import Import from './screens/Import'
 import Quiz from './screens/Quiz'
+
+describe('delen vanuit een andere app', () => {
+  it('vult het importscherm met de gedeelde tekst', () => {
+    const html = renderToString(
+      <Import cards={[]} initialText={'la maison = het huis\nle chien = de hond'} onAdd={() => {}} onCancel={() => {}} />,
+    )
+    // React zet <!-- --> tussen tekstnodes, dus controleer de waarden zelf
+    expect(html).toContain('value="la maison"')
+    expect(html).toContain('value="het huis"')
+    expect(html).toContain('value="le chien"')
+    expect(html).toContain('2 woord(en) toevoegen')
+  })
+
+  it('start leeg zonder gedeelde tekst', () => {
+    const html = renderToString(<Import cards={[]} onAdd={() => {}} onCancel={() => {}} />)
+    expect(html).toContain('Niets nieuws om toe te voegen')
+  })
+})
 
 describe('rendering', () => {
   it('start op zonder localStorage en toont de lege staat', () => {

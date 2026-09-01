@@ -38,10 +38,19 @@ Voor spraak op Android:
 
 ## Een lijstje toevoegen
 
-Foto van het lijstje maken met **Google Lens**, tekst kopiëren, plakken in het
-tekstvak. Eén paar per regel; `=`, een tab, een dubbelpunt, ` - ` of twee spaties
-werken allemaal als scheiding. In de voorbeeldtabel corrigeer je wat de OCR fout las
-voor je opslaat.
+Foto van het lijstje maken met **Google Lens**, tekst selecteren, en **Delen → Frans
+oefenen** kiezen. De app registreert zich als deeldoel (`share_target` in het
+manifest), dus de tekst landt rechtstreeks in het importscherm — geen kopiëren en
+plakken, geen wisselen van app. Dat werkt vanuit elke app die tekst kan delen: Lens,
+Foto's, Keep, een mail van de leerkracht.
+
+Kopiëren en zelf plakken kan nog altijd. Eén paar per regel; `=`, een tab, een
+dubbelpunt, ` - ` of twee spaties werken allemaal als scheiding. In de voorbeeldtabel
+corrigeer je wat de OCR fout las voor je opslaat.
+
+> Het deeldoel wordt geregistreerd bij het installeren. Staat de app al op je
+> startscherm, verwijder het icoon dan één keer en voeg het opnieuw toe, anders
+> verschijnt "Frans oefenen" niet in het deelmenu.
 
 De woordenschat is **cumulatief**: elke import komt erbij, woorden die er al staan
 houden hun opgebouwde voortgang. Woorden van vorige weken blijven vanzelf terugkomen.
