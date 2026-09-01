@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { type Card, type Dir, type Grade, type Item, answer, buildSession, grade, question } from '../leitner'
+import {
+  type Card,
+  type Dir,
+  type Grade,
+  type Item,
+  answer,
+  buildExtraSession,
+  buildSession,
+  grade,
+  question,
+} from '../leitner'
 import { canListen, listen, speak } from '../speech'
 
 /** Taal van de vraag, en dus ook van het verwachte antwoord in de andere richting. */
@@ -18,13 +28,20 @@ type Props = {
   week?: string
   /** Alleen de beoordeling doorgeven; App past ze toe op de actuele kaart. De items in
    *  de wachtrij zijn een momentopname en zouden een eerder antwoord overschrijven. */
-  onAnswer: (card: Card, dir: Dir, g: Grade) => void
+  onAnswer: (card: Card, dir: Dir, g: Grade, extra: boolean) => void
   onExit: () => void
 }
 
 export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
   // Sessie één keer samenstellen; hij mag niet herschikken bij elk antwoord.
-  const [queue, setQueue] = useState<Item[]>(() => buildSession(cards, Date.now(), week))
+  // Is er niets vervallen, dan toch laten oefenen — maar buiten het schema.
+  const [{ queue: startQueue, extra }] = useState(() => {
+    const gepland = buildSession(cards, Date.now(), week)
+    return gepland.length > 0
+      ? { queue: gepland, extra: false }
+      : { queue: buildExtraSession(cards, week), extra: true }
+  })
+  const [queue, setQueue] = useState<Item[]>(startQueue)
   const [typed, setTyped] = useState('')
   const [result, setResult] = useState<{ g: Grade; gegeven: string } | null>(null)
   const [luistert, setLuistert] = useState(false)
@@ -67,7 +84,7 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
     const g = grade(gegeven, answer({ card: item.card, dir: item.dir }))
     setResult({ g, gegeven })
     setGedaan((s) => ({ goed: s.goed + (g === 'goed' || g === 'accent' ? 1 : 0), totaal: s.totaal + 1 }))
-    onAnswer(item.card, item.dir, g)
+    onAnswer(item.card, item.dir, g, extra)
   }
 
   function volgende() {
@@ -125,6 +142,12 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
         </div>
         <span className="text-sm text-slate-500">{queue.length}</span>
       </div>
+
+      {extra && (
+        <p className="mb-4 rounded-lg bg-amber-50 p-2 text-center text-sm text-amber-800">
+          Extra oefening — alles zit op schema. Fouten tellen mee, goede antwoorden niet.
+        </p>
+      )}
 
       <div className="mb-6 text-center">
         <p className="mb-2 text-sm font-medium tracking-wide text-slate-500 uppercase">
