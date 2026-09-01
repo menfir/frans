@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+
+/* Tablet: geen zoom-op-dubbeltik en geen tekstselectie bij het tikken op knoppen. */
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
