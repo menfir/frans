@@ -22,8 +22,13 @@ export const MAX_BOX = INTERVALS.length - 1
 export const SESSION_SIZE = 20
 /** Hoeveel van een sessie maximaal herhalingen zijn; de rest wordt met nieuwe items gevuld. */
 export const MAX_REVIEWS = 15
-/** FR→NL (herkennen) moet deze box halen voor NL→FR (produceren) vrijkomt. */
-const PRODUCTION_UNLOCK_BOX = 2
+/**
+ * FR→NL (herkennen) moet deze box halen voor NL→FR (produceren) vrijkomt: je moet een
+ * woord één keer goed herkend hebben voor je het zelf moet produceren.
+ * Hoger dan 1 zetten kost kalenderdagen, want herhalingen liggen minstens een dag uit
+ * elkaar — bij 2 zie je de tweede richting pas na twee dagen.
+ */
+const PRODUCTION_UNLOCK_BOX = 1
 
 export function newCard(fr: string, nl: string, week: string): Card {
   return { fr, nl, week, box: { frnl: 0, nlfr: 0 }, due: { frnl: 0, nlfr: 0 } }
