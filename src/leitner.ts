@@ -114,8 +114,15 @@ export function schedule(box: number, g: Grade, now: number): { box: number; due
   return { box: next, due: now + INTERVALS[next] * DAY }
 }
 
-/** Kaart bijwerken na een antwoord; geeft een nieuwe kaart terug. */
-export function applyAnswer(card: Card, dir: Dir, g: Grade, now: number): Card {
+/**
+ * Kaart bijwerken na een antwoord; geeft een nieuwe kaart terug.
+ *
+ * `extra` = oefenen buiten het schema. Dan tellen alleen fouten: een goed antwoord
+ * verandert niets. Anders klikt hij zich in één zitting naar box 7 en komt het woord
+ * een maand niet meer terug zonder dat hij het beter kent.
+ */
+export function applyAnswer(card: Card, dir: Dir, g: Grade, now: number, extra = false): Card {
+  if (extra && (g === 'goed' || g === 'accent')) return card
   const { box, due } = schedule(card.box[dir], g, now)
   return { ...card, box: { ...card.box, [dir]: box }, due: { ...card.due, [dir]: due } }
 }
@@ -162,6 +169,19 @@ export function buildSession(cards: Card[], now: number, week?: string): Item[] 
     ...fresh.slice(0, SESSION_SIZE - takeReviews),
   ]
   return shuffle(picked)
+}
+
+/**
+ * Oefensessie buiten het schema, voor als er niets vervallen is en hij toch wil oefenen.
+ * Neemt de woorden die het dichtst bij hun herhaling zitten — die zijn het wankelst.
+ */
+export function buildExtraSession(cards: Card[], week?: string): Item[] {
+  const pool = week ? cards.filter((c) => c.week === week) : cards
+  const items = pool.flatMap((card) =>
+    DIRS.filter((dir) => isUnlocked(card, dir)).map((dir) => ({ card, dir })),
+  )
+  const dichtst = items.sort((a, b) => a.card.due[a.dir] - b.card.due[b.dir])
+  return shuffle(dichtst.slice(0, SESSION_SIZE))
 }
 
 /** Aantallen voor het startscherm. */

@@ -3,6 +3,7 @@ import {
   type Card,
   MAX_BOX,
   applyAnswer,
+  buildExtraSession,
   buildSession,
   grade,
   isUnlocked,
@@ -152,6 +153,51 @@ describe('buildSession', () => {
     const sessie = buildSession(cards, NOW, '2026-W36')
     expect(sessie).toHaveLength(2) // beide richtingen van dat ene woord
     expect(sessie.every((i) => i.card.fr === 'deze')).toBe(true)
+  })
+})
+
+describe('extra oefenen buiten het schema', () => {
+  it('geeft woorden terug ook al is er niets vervallen', () => {
+    const cards = [
+      card('later', 'plus tard', '2026-W36', 5, 20 * DAY),
+      card('veel later', 'bien plus tard', '2026-W36', 7, 30 * DAY),
+    ]
+    expect(buildSession(cards, NOW)).toHaveLength(0) // niets gepland
+    expect(buildExtraSession(cards).length).toBeGreaterThan(0)
+  })
+
+  it('kiest de woorden die het dichtst bij hun herhaling zitten', () => {
+    const cards = [
+      card('bijna', 'a', '2026-W36', 3, DAY),
+      ...Array.from({ length: 30 }, (_, i) => card(`ver${i}`, `b${i}`, '2026-W36', 7, 30 * DAY)),
+    ]
+    expect(buildExtraSession(cards).some((i) => i.card.fr === 'bijna')).toBe(true)
+  })
+
+  it('laat een goed antwoord de planning niet oprekken', () => {
+    const c = card('maison', 'huis', '2026-W36', 3, 5 * DAY)
+    expect(applyAnswer(c, 'frnl', 'goed', NOW, true)).toBe(c) // ongewijzigd
+  })
+
+  it('laat een fout wel gewoon meetellen', () => {
+    const c = card('maison', 'huis', '2026-W36', 6, 20 * DAY)
+    const na = applyAnswer(c, 'frnl', 'fout', NOW, true)
+    expect(na.box.frnl).toBe(1)
+    expect(na.due.frnl).toBe(NOW + DAY)
+  })
+
+  it('kan zich niet naar de hoogste box klikken', () => {
+    let c = card('maison', 'huis', '2026-W36', 3, 5 * DAY)
+    for (let i = 0; i < 10; i++) c = applyAnswer(c, 'frnl', 'goed', NOW, true)
+    expect(c.box.frnl).toBe(3)
+  })
+
+  it('respecteert de weekfilter', () => {
+    const cards = [
+      card('deze', 'a', '2026-W36', 5, 20 * DAY),
+      card('andere', 'b', '2026-W30', 5, 20 * DAY),
+    ]
+    expect(buildExtraSession(cards, '2026-W36').every((i) => i.card.fr === 'deze')).toBe(true)
   })
 })
 

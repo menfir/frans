@@ -59,6 +59,12 @@ oude woorden niet vergeten worden.
 Met de keuzelijst op het startscherm oefen je één week apart, om te blokken voor een
 toets. Dat negeert de vervaldatums maar telt wel gewoon mee voor de boxen.
 
+Zit alles op schema en is er niets te herhalen, dan kun je nog steeds oefenen: je
+krijgt dan de woorden die het dichtst bij hun herhaling zitten. In die extra sessie
+tellen alleen fouten mee — een goed antwoord schuift niets op. Anders zou je je in
+één zitting naar de hoogste box kunnen klikken en komt een woord een maand niet meer
+terug zonder dat je het beter kent.
+
 ## Delen
 
 Het 🔗-knopje bij een week kopieert een link met die woorden erin (gecomprimeerd in

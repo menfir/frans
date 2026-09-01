@@ -67,10 +67,12 @@ export default function App() {
         week={scherm.week}
         // Bewaren per antwoord: sluit hij de tablet halverwege, dan is de voortgang er nog.
         // Toepassen op de kaart uit de actuele state, niet op de kopie uit de wachtrij.
-        onAnswer={(kaart, dir, g) =>
+        onAnswer={(kaart, dir, g, extra) =>
           setCards((prev) => {
             const next = prev.map((c) =>
-              c.fr === kaart.fr && c.nl === kaart.nl ? applyAnswer(c, dir, g, Date.now()) : c,
+              c.fr === kaart.fr && c.nl === kaart.nl
+                ? applyAnswer(c, dir, g, Date.now(), extra)
+                : c,
             )
             save(next)
             return next
