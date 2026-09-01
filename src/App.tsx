@@ -11,6 +11,7 @@ export default function App() {
   const [cards, setCards] = useState<Card[]>(load)
   const [scherm, setScherm] = useState<Scherm>({ naam: 'home' })
   const [gedeeld, setGedeeld] = useState<{ week: string; pairs: Pair[] } | null>(null)
+  const [gedeeldVanuitApp, setGedeeldVanuitApp] = useState<string>('')
 
   // Gedeelde lijst uit de URL-hash oppikken.
   useEffect(() => {
@@ -19,6 +20,16 @@ export default function App() {
       if (s) setGedeeld(s)
       history.replaceState(null, '', location.pathname) // hash weg, anders komt hij bij elke herlaad terug
     })
+  }, [])
+
+  // Tekst die vanuit een andere app gedeeld is (Google Lens, Foto's, een bericht):
+  // Android levert ze af als ?text= op de start-URL. Meteen door naar het importscherm.
+  useEffect(() => {
+    const gedeeldeTekst = new URL(location.href).searchParams.get('text')
+    if (!gedeeldeTekst?.trim()) return
+    setGedeeldVanuitApp(gedeeldeTekst)
+    setScherm({ naam: 'import' })
+    history.replaceState(null, '', location.pathname)
   }, [])
 
   function bewaar(next: Card[]) {
@@ -57,7 +68,14 @@ export default function App() {
   }
 
   if (scherm.naam === 'import') {
-    return <Import cards={cards} onAdd={voegToe} onCancel={() => setScherm({ naam: 'home' })} />
+    return (
+      <Import
+        cards={cards}
+        initialText={gedeeldVanuitApp}
+        onAdd={voegToe}
+        onCancel={() => setScherm({ naam: 'home' })}
+      />
+    )
   }
 
   if (scherm.naam === 'quiz') {
