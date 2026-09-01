@@ -26,6 +26,10 @@ De workflow in `.github/workflows/deploy.yml` draait de tests en zet de app onli
 Open die URL in Chrome → menu → **Toevoegen aan startscherm**. De app start dan
 schermvullend, met een eigen icoon.
 
+Voorlezen gebeurt alleen voor het Franse woord: bij Frans → Nederlands zodra de vraag
+verschijnt, bij Nederlands → Frans zodra het antwoord getoond wordt. Zo hoor je de
+uitspraak ook van woorden die je nog niet kende. Met 🔊 herhaal je ze.
+
 Voor spraak op Android:
 
 - Spraakherkenning vraagt één keer toestemming voor de microfoon en heeft internet nodig.
