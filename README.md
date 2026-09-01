@@ -49,8 +49,10 @@ Zeven boxen, met intervallen van 0, 1, 2, 4, 8, 16 en 32 dagen. Goed beantwoord 
 dezelfde sessie. Bijna goed (één letter of een accent) zakt maar één box.
 
 Elk woord telt als twee aparte kaarten: Frans → Nederlands (herkennen) en
-Nederlands → Frans (produceren). De tweede komt pas vrij als de eerste box 2 haalt —
-eerst herkennen, dan pas zelf produceren.
+Nederlands → Frans (produceren). Een nieuw woord komt eerst alleen als Frans →
+Nederlands langs; zodra je het één keer beantwoord hebt, komt de omgekeerde richting
+erbij. Eerst herkennen, dan pas zelf produceren — maar zonder dat je er een dag op
+moet wachten.
 
 Een sessie is 20 items: maximaal 15 herhalingen (meest achterstallige eerst) en de
 rest nieuwe woorden, zodat het nieuwe lijstje niet verdrinkt in de achterstand en de

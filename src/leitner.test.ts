@@ -95,13 +95,34 @@ describe('applyAnswer', () => {
 })
 
 describe('isUnlocked', () => {
-  it('geeft NL→FR pas vrij als FR→NL is ingeslepen', () => {
+  it('vraagt een nieuw woord eerst alleen in de makkelijke richting', () => {
     const vers = card('maison', 'huis')
     expect(isUnlocked(vers, 'frnl')).toBe(true)
     expect(isUnlocked(vers, 'nlfr')).toBe(false)
+  })
 
-    const geoefend = applyAnswer(applyAnswer(vers, 'frnl', 'goed', NOW), 'frnl', 'goed', NOW)
+  it('geeft NL→FR vrij na één keer goed herkennen', () => {
+    const geoefend = applyAnswer(card('maison', 'huis'), 'frnl', 'goed', NOW)
     expect(isUnlocked(geoefend, 'nlfr')).toBe(true)
+  })
+
+  it('geeft NL→FR ook vrij na een fout antwoord, want het woord is dan gezien', () => {
+    // Fout gaat naar box 1, dus de poort staat open. Kan hij het niet produceren,
+    // dan zakt NL→FR gewoon terug naar box 1 en blijft het terugkomen.
+    const fout = applyAnswer(card('maison', 'huis'), 'frnl', 'fout', NOW)
+    expect(fout.box.frnl).toBe(1)
+    expect(isUnlocked(fout, 'nlfr')).toBe(true)
+  })
+
+  it('laat beide richtingen dezelfde dag aan bod komen', () => {
+    // sessie 1: alleen FR→NL, want NL→FR zit nog op slot
+    const eerste = buildSession([card('maison', 'huis')], NOW)
+    expect(eerste.map((i) => i.dir)).toEqual(['frnl'])
+
+    // na dat ene goede antwoord komt NL→FR er meteen bij, zonder een dag te wachten
+    const na = applyAnswer(eerste[0].card, 'frnl', 'goed', NOW)
+    const tweede = buildSession([na], NOW)
+    expect(tweede.map((i) => i.dir)).toEqual(['nlfr'])
   })
 })
 
