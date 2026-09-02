@@ -18,9 +18,10 @@ type Props = {
   cards: Card[]
   onStart: (week?: string) => void
   onImport: () => void
+  onEdit: () => void
 }
 
-export default function Home({ cards, onStart, onImport }: Props) {
+export default function Home({ cards, onStart, onImport, onEdit }: Props) {
   const [week, setWeek] = useState('')
   const [gedeeld, setGedeeld] = useState('')
   const s = stats(cards, Date.now())
@@ -86,10 +87,16 @@ export default function Home({ cards, onStart, onImport }: Props) {
 
       <button
         onClick={onImport}
-        className="mb-8 w-full rounded-xl border-2 border-slate-300 py-4 font-semibold text-slate-700"
+        className="mb-3 w-full rounded-xl border-2 border-slate-300 py-4 font-semibold text-slate-700"
       >
         + Woorden toevoegen
       </button>
+
+      {cards.length > 0 && (
+        <button onClick={onEdit} className="mb-8 w-full py-2 text-slate-500">
+          Woorden aanpassen
+        </button>
+      )}
 
       {weken.length > 0 && (
         <>

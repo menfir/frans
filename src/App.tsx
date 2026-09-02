@@ -3,9 +3,14 @@ import { type Card, applyAnswer } from './leitner'
 import Home from './screens/Home'
 import Import from './screens/Import'
 import Quiz from './screens/Quiz'
+import Woorden from './screens/Woorden'
 import { type Pair, addPairs, load, readShared, save } from './store'
 
-type Scherm = { naam: 'home' } | { naam: 'import' } | { naam: 'quiz'; week?: string }
+type Scherm =
+  | { naam: 'home' }
+  | { naam: 'import' }
+  | { naam: 'woorden' }
+  | { naam: 'quiz'; week?: string }
 
 export default function App() {
   const [cards, setCards] = useState<Card[]>(load)
@@ -78,6 +83,10 @@ export default function App() {
     )
   }
 
+  if (scherm.naam === 'woorden') {
+    return <Woorden cards={cards} onChange={bewaar} onExit={() => setScherm({ naam: 'home' })} />
+  }
+
   if (scherm.naam === 'quiz') {
     return (
       <Quiz
@@ -106,6 +115,7 @@ export default function App() {
       cards={cards}
       onStart={(week) => setScherm({ naam: 'quiz', week })}
       onImport={() => setScherm({ naam: 'import' })}
+      onEdit={() => setScherm({ naam: 'woorden' })}
     />
   )
 }

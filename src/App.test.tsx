@@ -6,6 +6,7 @@ import App from './App'
 import { newCard } from './leitner'
 import Import from './screens/Import'
 import Quiz from './screens/Quiz'
+import Woorden from './screens/Woorden'
 
 describe('delen vanuit een andere app', () => {
   it('vult het importscherm met de gedeelde tekst', () => {
@@ -68,6 +69,15 @@ describe('rendering', () => {
     expect(html).toContain('Nederlands → Frans')
     expect(html).toContain('het huis')
     expect(html).not.toContain('voorlezen') // het Franse woord staat pas in het antwoord
+  })
+
+  it('toont de woorden bewerkbaar, met een waarschuwing bij een leeg veld', () => {
+    const leeg = newCard('la maison', '', '2026-W36')
+    const html = renderToString(
+      <Woorden cards={[leeg]} onChange={() => {}} onExit={() => {}} />,
+    )
+    expect(html).toContain('value="la maison"')
+    expect(html).toContain('Vul beide velden in')
   })
 
   it('laat toch oefenen als alles op schema zit', () => {
