@@ -31,6 +31,12 @@ describe('normalize', () => {
     expect(normalize('La Maison')).toBe('maison')
     expect(normalize('het huis')).toBe('huis')
   })
+
+  it('trekt de leestekens gelijk die spraakherkenning erbij zet', () => {
+    expect(normalize('l’école')).toBe('ecole') // krulapostrof van Google
+    expect(normalize('maison,')).toBe('maison')
+    expect(normalize('est-ce que')).toBe(normalize('est ce que'))
+  })
 })
 
 describe('grade', () => {
@@ -61,6 +67,32 @@ describe('grade', () => {
   it('laat verschillende korte woorden niet voor elkaar doorgaan', () => {
     // 'gros' en 'gras' schelen één letter maar mogen niet als bijna-goed tellen bij een fout woord
     expect(grade('fiets', 'huis')).toBe('fout')
+    // Deze test moet vallen als het gelijktrekken van leestekens ooit te gulzig wordt.
+    expect(grade('gros', 'grand')).toBe('fout')
+    expect(grade('le chat', 'le chien')).toBe('fout')
+    expect(grade('sans', 'cent')).toBe('fout')
+  })
+
+  it('keurt een ingesproken antwoord met krulapostrof gewoon goed', () => {
+    expect(grade('l’école', "l'école")).toBe('goed')
+    expect(grade('qu’est-ce que c’est', "qu'est-ce que c'est")).toBe('goed')
+  })
+
+  it('negeert de punt of komma die spraakherkenning toevoegt', () => {
+    expect(grade('maison,', 'la maison')).toBe('goed')
+    expect(grade('de kat!', 'de kat')).toBe('goed')
+    expect(grade('avoir besoin de.', 'avoir besoin de')).toBe('goed')
+  })
+
+  it('vergeeft een koppelteken dat de spraakherkenning niet hoort', () => {
+    expect(grade('est ce que', 'est-ce que')).toBe('goed')
+  })
+
+  it('geeft een lange uitdrukking meer speling dan een kort woord', () => {
+    expect(grade('avoir besoin da', 'avoir besoin de')).toBe('bijna') // 1 teken
+    expect(grade('avoir bezoin da', 'avoir besoin de')).toBe('bijna') // 2 tekens mag hier
+    expect(grade('hues', 'huis')).toBe('bijna') // kort: 1 teken
+    expect(grade('hoes', 'huis')).toBe('fout') // kort: 2 tekens is te veel
   })
 })
 

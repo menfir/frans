@@ -18,6 +18,9 @@ const answerLang = (dir: Dir) => (dir === 'frnl' ? 'nl-BE' : 'fr-FR')
 // Voorlezen doen we uitsluitend voor het Franse woord, en dat is altijd card.fr:
 // bij FR→NL is dat de vraag, bij NL→FR het antwoord.
 
+/** Van beste naar slechtste, om het beste spraakalternatief te kiezen. */
+const RANK: Record<Grade, number> = { goed: 0, accent: 1, bijna: 2, fout: 3 }
+
 const FEEDBACK: Record<Grade, { titel: string; klasse: string }> = {
   goed: { titel: 'Juist!', klasse: 'bg-emerald-100 text-emerald-900' },
   accent: { titel: 'Juist — let op de accenten', klasse: 'bg-emerald-100 text-emerald-900' },
@@ -45,7 +48,9 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
   })
   const [queue, setQueue] = useState<Item[]>(startQueue)
   const [typed, setTyped] = useState('')
-  const [result, setResult] = useState<{ g: Grade; gegeven: string } | null>(null)
+  const [result, setResult] = useState<{ g: Grade; gegeven: string; viaSpraak: boolean } | null>(
+    null,
+  )
   const [luistert, setLuistert] = useState(false)
   const [micFout, setMicFout] = useState('')
   const [gedaan, setGedaan] = useState({ goed: 0, totaal: 0 })
@@ -87,19 +92,21 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
     )
   }
 
-  function beoordeel(gegeven: string) {
+  function beoordeel(gegeven: string, viaSpraak = false) {
     if (!item || result) return
-    const g = grade(gegeven, answer({ card: item.card, dir: item.dir }))
-    setResult({ g, gegeven })
-    setGedaan((s) => ({ goed: s.goed + (g === 'goed' || g === 'accent' ? 1 : 0), totaal: s.totaal + 1 }))
-    onAnswer(item.card, item.dir, g, extra)
+    setResult({ g: grade(gegeven, answer({ card: item.card, dir: item.dir })), gegeven, viaSpraak })
   }
 
+  // Pas vastleggen bij Volgende, niet meteen bij het antwoord: anders zou "Toch juist"
+  // bovenop een al toegepaste fout landen (box naar 1, dan +1) in plaats van op de
+  // oorspronkelijke box. Bewaren per antwoord blijft, het schuift één tik op.
   function volgende() {
-    if (!item) return
-    const fout = result && result.g !== 'goed' && result.g !== 'accent'
+    if (!item || !result) return
+    const juistBeantwoord = result.g === 'goed' || result.g === 'accent'
+    onAnswer(item.card, item.dir, result.g, extra)
+    setGedaan((s) => ({ goed: s.goed + (juistBeantwoord ? 1 : 0), totaal: s.totaal + 1 }))
     // Fout? Achteraan in de rij, zodat het deze sessie nog eens terugkomt.
-    setQueue((q) => (fout ? [...q.slice(1), q[0]] : q.slice(1)))
+    setQueue((q) => (juistBeantwoord ? q.slice(1) : [...q.slice(1), q[0]]))
     setResult(null)
     setTyped('')
     setMicFout('')
@@ -118,13 +125,14 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
       answerLang(item.dir),
       (alternatieven) => {
         setLuistert(false)
-        // Neem het alternatief dat het best scoort — één treffer volstaat.
+        // Neem het alternatief dat het best scoort; 'accent' is ook gewoon juist.
+        const juistAntwoord = answer({ card: item.card, dir: item.dir })
         const beste =
-          alternatieven.find(
-            (a) => grade(a, answer({ card: item.card, dir: item.dir })) === 'goed',
-          ) ?? alternatieven[0]
+          [...alternatieven].sort(
+            (a, b) => RANK[grade(a, juistAntwoord)] - RANK[grade(b, juistAntwoord)],
+          )[0] ?? ''
         setTyped(beste)
-        beoordeel(beste)
+        beoordeel(beste, true)
       },
       (msg) => {
         setLuistert(false)
@@ -194,6 +202,16 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
           </div>
           {result.g !== 'goed' && (
             <p className="mt-1 text-sm opacity-75">jij zei: {result.gegeven}</p>
+          )}
+          {/* Alleen na spreken: homofonen en misgehoorde woorden vangt geen enkele
+              normalisatie af. Bij typen weet hij het zelf, dan is dit een gratis punt. */}
+          {result.viaSpraak && (result.g === 'fout' || result.g === 'bijna') && (
+            <button
+              onClick={() => setResult({ ...result, g: 'goed' })}
+              className="mt-3 rounded-lg bg-white/70 px-4 py-2 text-sm font-semibold"
+            >
+              Toch juist — hij hoorde me verkeerd
+            </button>
           )}
         </div>
       ) : (
