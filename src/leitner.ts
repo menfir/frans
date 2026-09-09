@@ -16,7 +16,7 @@ export type Item = { card: Card; dir: Dir }
 
 const DAY = 86_400_000
 /** Interval per box, in dagen. Index = box. Box 0 bestaat niet als wachttijd. */
-const INTERVALS = [0, 1, 2, 7, 14]
+export const INTERVALS = [0, 1, 2, 7, 14]
 export const MAX_BOX = INTERVALS.length - 1
 
 export const SESSION_SIZE = 20
@@ -200,6 +200,20 @@ export function buildExtraSession(cards: Card[], week?: string): Item[] {
   )
   const dichtst = items.sort((a, b) => a.card.due[a.dir] - b.card.due[b.dir])
   return shuffle(dichtst.slice(0, SESSION_SIZE))
+}
+
+/**
+ * Hoeveel richtingen er in elk doosje zitten, van 0 (nog nooit gezien) tot MAX_BOX.
+ * Per richting geteld en niet per woord: het schema plant FR→NL en NL→FR los van elkaar,
+ * dus een woord zit doorgaans in twee verschillende doosjes tegelijk.
+ */
+export function perBox(cards: Card[]) {
+  return INTERVALS.map((dagen, box) => ({
+    box,
+    dagen,
+    frnl: cards.filter((c) => Math.min(c.box.frnl, MAX_BOX) === box).length,
+    nlfr: cards.filter((c) => Math.min(c.box.nlfr, MAX_BOX) === box).length,
+  }))
 }
 
 /** Aantallen voor het startscherm. */

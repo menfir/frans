@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   type Card,
   MAX_BOX,
+  perBox,
   applyAnswer,
   buildExtraSession,
   buildSession,
@@ -257,6 +258,19 @@ describe('extra oefenen buiten het schema', () => {
       card('andere', 'b', '2026-W30', 4, 20 * DAY),
     ]
     expect(buildExtraSession(cards, '2026-W36').every((i) => i.card.fr === 'deze')).toBe(true)
+  })
+})
+
+describe('perBox', () => {
+  it('telt per richting en zet te hoge boxen in het laatste doosje', () => {
+    const cards = [card('a', 'a'), card('b', 'b', '2026-W36', 2), card('c', 'c', '2026-W36', 9)]
+    cards[1].box.nlfr = 0
+
+    const d = perBox(cards)
+    expect(d).toHaveLength(MAX_BOX + 1)
+    expect(d[0]).toMatchObject({ dagen: 0, frnl: 1, nlfr: 2 })
+    expect(d[2]).toMatchObject({ dagen: 2, frnl: 1, nlfr: 0 })
+    expect(d[MAX_BOX]).toMatchObject({ dagen: 14, frnl: 1, nlfr: 1 })
   })
 })
 

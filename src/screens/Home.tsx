@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { type Card, DIRS, MAX_BOX, stats } from '../leitner'
+import { type Card, DIRS, MAX_BOX, perBox, stats } from '../leitner'
 import { shareLink } from '../store'
 
 /** Per week: hoeveel woorden, en hoeveel daarvan al goed vastzitten — de bovenste twee
@@ -27,6 +27,9 @@ export default function Home({ cards, onStart, onImport, onEdit }: Props) {
   const [gedeeld, setGedeeld] = useState('')
   const s = stats(cards, Date.now())
   const weken = perWeek(cards)
+  const doosjes = perBox(cards)
+  // Alle balkjes op dezelfde schaal, anders lijkt een leeg doosje even vol als een vol doosje.
+  const grootste = Math.max(1, ...doosjes.map((d) => Math.max(d.frnl, d.nlfr)))
 
   async function deel(w: string) {
     const pairs = cards.filter((c) => c.week === w).map(({ fr, nl }) => ({ fr, nl }))
@@ -97,6 +100,43 @@ export default function Home({ cards, onStart, onImport, onEdit }: Props) {
         <button onClick={onEdit} className="mb-8 w-full py-2 text-slate-500">
           Woorden aanpassen
         </button>
+      )}
+
+      {cards.length > 0 && (
+        <>
+          <h2 className="font-semibold text-slate-700">Per doosje</h2>
+          <p className="mb-2 text-xs text-slate-500">
+            Per richting geteld — elk woord zit in twee doosjes.
+          </p>
+          <div className="mb-8 rounded-xl border border-slate-200">
+            <div className="flex gap-3 border-b border-slate-100 px-3 py-2 text-xs text-slate-500">
+              <span className="w-16">doosje</span>
+              <span className="flex-1">FR&nbsp;→&nbsp;NL</span>
+              <span className="flex-1">NL&nbsp;→&nbsp;FR</span>
+            </div>
+            {doosjes.map(({ box, dagen, frnl, nlfr }) => (
+              <div
+                key={box}
+                className="flex items-center gap-3 border-b border-slate-100 p-3 last:border-0"
+              >
+                <span className="w-16 text-sm whitespace-nowrap text-slate-600">
+                  {box === 0 ? 'nieuw' : `${dagen} ${dagen === 1 ? 'dag' : 'dagen'}`}
+                </span>
+                {[frnl, nlfr].map((n, i) => (
+                  <div key={i} className="flex flex-1 items-center gap-2">
+                    <div className="h-2 min-w-0 flex-1 rounded-full bg-slate-200">
+                      <div
+                        className={`h-2 rounded-full ${box === 0 ? 'bg-slate-400' : 'bg-emerald-500'}`}
+                        style={{ width: `${(n / grootste) * 100}%` }}
+                      />
+                    </div>
+                    <span className="w-5 text-right text-sm tabular-nums text-slate-500">{n}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {weken.length > 0 && (
