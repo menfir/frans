@@ -7,7 +7,7 @@ export type Card = {
   fr: string
   nl: string
   week: string // label, bv. "2026-W36" — alleen om te filteren en te delen
-  box: Record<Dir, number> // 0 = nog nooit gezien, daarna 1..7
+  box: Record<Dir, number> // 0 = nog nooit gezien, daarna 1..MAX_BOX
   due: Record<Dir, number> // epoch ms
 }
 
@@ -16,7 +16,7 @@ export type Item = { card: Card; dir: Dir }
 
 const DAY = 86_400_000
 /** Interval per box, in dagen. Index = box. Box 0 bestaat niet als wachttijd. */
-const INTERVALS = [0, 1, 2, 4, 8, 16, 32]
+const INTERVALS = [0, 1, 2, 7, 14]
 export const MAX_BOX = INTERVALS.length - 1
 
 export const SESSION_SIZE = 20
@@ -126,6 +126,9 @@ export function schedule(box: number, g: Grade, now: number): { box: number; due
   // 'bijna' zakt één box in plaats van heel terug naar 1 — anders is spraakinvoer frustrerend.
   else if (g === 'bijna') next = Math.max(1, box - 1)
   else next = 1
+  // Opgeslagen kaarten kunnen uit een tijd komen met meer doosjes; zonder deze klem
+  // wijst 'bijna' naar een interval dat niet bestaat en wordt due NaN.
+  next = Math.min(next, MAX_BOX)
   return { box: next, due: now + INTERVALS[next] * DAY }
 }
 
@@ -133,8 +136,8 @@ export function schedule(box: number, g: Grade, now: number): { box: number; due
  * Kaart bijwerken na een antwoord; geeft een nieuwe kaart terug.
  *
  * `extra` = oefenen buiten het schema. Dan tellen alleen fouten: een goed antwoord
- * verandert niets. Anders klikt hij zich in één zitting naar box 7 en komt het woord
- * een maand niet meer terug zonder dat hij het beter kent.
+ * verandert niets. Anders klikt hij zich in één zitting naar de hoogste box en komt het woord
+ * twee weken niet meer terug zonder dat hij het beter kent.
  */
 export function applyAnswer(card: Card, dir: Dir, g: Grade, now: number, extra = false): Card {
   if (extra && (g === 'goed' || g === 'accent')) return card
