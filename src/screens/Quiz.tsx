@@ -55,7 +55,6 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
   const [micFout, setMicFout] = useState('')
   const [gedaan, setGedaan] = useState({ goed: 0, totaal: 0 })
   const stopListening = useRef<() => void>(() => {})
-  const inputRef = useRef<HTMLInputElement>(null)
 
   const item = queue[0]
   // Beginlengte één keer vastleggen voor de voortgangsbalk; de wachtrij zelf krimpt.
@@ -110,7 +109,6 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
     setResult(null)
     setTyped('')
     setMicFout('')
-    inputRef.current?.focus()
   }
 
   function spreek() {
@@ -217,10 +215,16 @@ export default function Quiz({ cards, week, onAnswer, onExit }: Props) {
       ) : (
         <div className="mb-4 space-y-3">
           <input
-            ref={inputRef}
+            autoFocus
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && typed.trim() && beoordeel(typed)}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' || !typed.trim()) return
+              // De standaardactie van deze toets komt pas ná de re-render, en landt dan op
+              // de zojuist gefocuste "Volgende"-knop: één Enter sloeg zo de feedback over.
+              e.preventDefault()
+              beoordeel(typed)
+            }}
             placeholder="Typ de vertaling…"
             autoCapitalize="off"
             autoCorrect="off"
