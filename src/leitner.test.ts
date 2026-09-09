@@ -99,7 +99,7 @@ describe('grade', () => {
 describe('schedule', () => {
   it('schuift op bij een goed antwoord en wacht langer', () => {
     expect(schedule(1, 'goed', NOW)).toEqual({ box: 2, due: NOW + 2 * DAY })
-    expect(schedule(3, 'goed', NOW)).toEqual({ box: 4, due: NOW + 8 * DAY })
+    expect(schedule(3, 'goed', NOW)).toEqual({ box: 4, due: NOW + 14 * DAY })
   })
 
   it('stopt bij de hoogste box', () => {
@@ -107,11 +107,17 @@ describe('schedule', () => {
   })
 
   it('valt bij een fout helemaal terug naar box 1', () => {
-    expect(schedule(6, 'fout', NOW)).toEqual({ box: 1, due: NOW + DAY })
+    expect(schedule(MAX_BOX, 'fout', NOW)).toEqual({ box: 1, due: NOW + DAY })
+  })
+
+  it('trekt een box uit een oudere versie binnen het bereik', () => {
+    const { box, due } = schedule(9, 'bijna', NOW)
+    expect(box).toBe(MAX_BOX)
+    expect(due).toBe(NOW + 14 * DAY)
   })
 
   it('zakt bij bijna-goed maar één box', () => {
-    expect(schedule(5, 'bijna', NOW).box).toBe(4)
+    expect(schedule(4, 'bijna', NOW).box).toBe(3)
     expect(schedule(1, 'bijna', NOW).box).toBe(1)
   })
 })
@@ -212,8 +218,8 @@ describe('buildSession', () => {
 describe('extra oefenen buiten het schema', () => {
   it('geeft woorden terug ook al is er niets vervallen', () => {
     const cards = [
-      card('later', 'plus tard', '2026-W36', 5, 20 * DAY),
-      card('veel later', 'bien plus tard', '2026-W36', 7, 30 * DAY),
+      card('later', 'plus tard', '2026-W36', 3, 20 * DAY),
+      card('veel later', 'bien plus tard', '2026-W36', 4, 30 * DAY),
     ]
     expect(buildSession(cards, NOW)).toHaveLength(0) // niets gepland
     expect(buildExtraSession(cards).length).toBeGreaterThan(0)
@@ -222,7 +228,7 @@ describe('extra oefenen buiten het schema', () => {
   it('kiest de woorden die het dichtst bij hun herhaling zitten', () => {
     const cards = [
       card('bijna', 'a', '2026-W36', 3, DAY),
-      ...Array.from({ length: 30 }, (_, i) => card(`ver${i}`, `b${i}`, '2026-W36', 7, 30 * DAY)),
+      ...Array.from({ length: 30 }, (_, i) => card(`ver${i}`, `b${i}`, '2026-W36', 4, 30 * DAY)),
     ]
     expect(buildExtraSession(cards).some((i) => i.card.fr === 'bijna')).toBe(true)
   })
@@ -233,7 +239,7 @@ describe('extra oefenen buiten het schema', () => {
   })
 
   it('laat een fout wel gewoon meetellen', () => {
-    const c = card('maison', 'huis', '2026-W36', 6, 20 * DAY)
+    const c = card('maison', 'huis', '2026-W36', MAX_BOX, 20 * DAY)
     const na = applyAnswer(c, 'frnl', 'fout', NOW, true)
     expect(na.box.frnl).toBe(1)
     expect(na.due.frnl).toBe(NOW + DAY)
@@ -247,8 +253,8 @@ describe('extra oefenen buiten het schema', () => {
 
   it('respecteert de weekfilter', () => {
     const cards = [
-      card('deze', 'a', '2026-W36', 5, 20 * DAY),
-      card('andere', 'b', '2026-W30', 5, 20 * DAY),
+      card('deze', 'a', '2026-W36', 4, 20 * DAY),
+      card('andere', 'b', '2026-W30', 4, 20 * DAY),
     ]
     expect(buildExtraSession(cards, '2026-W36').every((i) => i.card.fr === 'deze')).toBe(true)
   })

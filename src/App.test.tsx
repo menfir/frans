@@ -82,7 +82,7 @@ describe('rendering', () => {
 
   it('laat toch oefenen als alles op schema zit', () => {
     const card = newCard('la maison', 'het huis', '2026-W36')
-    card.box = { frnl: 5, nlfr: 5 }
+    card.box = { frnl: 3, nlfr: 3 }
     card.due = { frnl: Date.now() + 20 * 86_400_000, nlfr: Date.now() + 20 * 86_400_000 }
 
     const html = renderToString(<Quiz cards={[card]} onAnswer={() => {}} onExit={() => {}} />)

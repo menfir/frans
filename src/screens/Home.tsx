@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { type Card, DIRS, stats } from '../leitner'
+import { type Card, DIRS, MAX_BOX, stats } from '../leitner'
 import { shareLink } from '../store'
 
-/** Per week: hoeveel woorden, en hoeveel daarvan al goed vastzitten (box 5+ in beide richtingen). */
+/** Per week: hoeveel woorden, en hoeveel daarvan al goed vastzitten — de bovenste twee
+ *  doosjes in beide richtingen. */
 function perWeek(cards: Card[]) {
   const weken = new Map<string, { totaal: number; sterk: number }>()
   for (const c of cards) {
     const w = weken.get(c.week) ?? { totaal: 0, sterk: 0 }
     w.totaal++
-    if (DIRS.every((d) => c.box[d] >= 5)) w.sterk++
+    if (DIRS.every((d) => c.box[d] >= MAX_BOX - 1)) w.sterk++
     weken.set(c.week, w)
   }
   return [...weken.entries()].sort((a, b) => b[0].localeCompare(a[0]))
