@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
+import { newCard } from './leitner'
 import { parseList } from './screens/Import'
+import { gesorteerd } from './screens/Woorden'
 import { readShared, shareLink } from './store'
 
 beforeAll(() => {
@@ -65,5 +67,28 @@ describe('parseList', () => {
     expect(parseList('avoir besoin de = nodig hebben')).toEqual([
       { fr: 'avoir besoin de', nl: 'nodig hebben' },
     ])
+  })
+})
+
+describe('woorden aanpassen', () => {
+  const cards = [
+    newCard('le chien', 'de hond', '2026-W35'),
+    newCard('la maison', 'het huis', '2026-W36'),
+    newCard('le chat', 'de kat', '2026-W36'),
+  ]
+
+  it('zet de nieuwste week eerst en sorteert daarbinnen alfabetisch', () => {
+    expect(gesorteerd(cards, '').map(([c]) => c.fr)).toEqual(['la maison', 'le chat', 'le chien'])
+  })
+
+  it('houdt de index van de originele lijst vast, ook na sorteren en zoeken', () => {
+    // Hierop staat of vallen bewerken en verwijderen: de index moet de juiste kaart raken.
+    for (const [card, i] of gesorteerd(cards, '')) expect(cards[i]).toBe(card)
+    expect(gesorteerd(cards, 'chat')).toEqual([[cards[2], 2]])
+  })
+
+  it('zoekt in beide talen, hoofdletterongevoelig', () => {
+    expect(gesorteerd(cards, 'HOND').map(([c]) => c.fr)).toEqual(['le chien'])
+    expect(gesorteerd(cards, 'niets').length).toBe(0)
   })
 })

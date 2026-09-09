@@ -42,26 +42,31 @@ export const answer = (item: Item) => (item.dir === 'frnl' ? item.card.nl : item
 // l'/d' plakken aan het woord vast (l'école), de rest staat los.
 const ARTICLES = /^(?:[ld]'|(?:le|la|les|un|une|des|du|de|het|een)\s+)/
 
-/** Kleine letters, accenten weg, lidwoord weg, witruimte ingeklapt. */
-export function normalize(s: string): string {
-  const bare = s
+/**
+ * Leestekens, apostrofvarianten en koppeltekens gelijktrekken. Spraakherkenning levert
+ * krulapostrofs en zet er punten en komma's bij die niets met het antwoord te maken hebben.
+ * Leestekens gaan er bewust uit vóór NFD: daarna zijn accenten losse combineertekens die
+ * anders door de leestekenfilter zouden sneuvelen.
+ */
+const tidy = (s: string) =>
+  s
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/[.!?;]/g, '')
+    .normalize('NFC') // é als één teken, hoe het ook binnenkomt
+    .replace(/[’‘`´]/g, "'") // krulapostrof → gewone, anders herkent ARTICLES het lidwoord niet
+    .replace(/[-–—]/g, ' ') // koppelteken telt als spatie: "est-ce que" = "est ce que"
+    .replace(/[^\p{L}\p{N}' ]/gu, '')
     .replace(/\s+/g, ' ')
     .trim()
+
+/** Kleine letters, accenten weg, lidwoord weg, witruimte ingeklapt. */
+export function normalize(s: string): string {
+  const bare = tidy(s).normalize('NFD').replace(/\p{Diacritic}/gu, '')
   return bare.replace(ARTICLES, '').trim()
 }
 
 /** Zelfde als normalize, maar accenten blijven staan — om "goed op accent na" te herkennen. */
 function normalizeKeepAccents(s: string): string {
-  const bare = s
-    .toLowerCase()
-    .replace(/[.!?;]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-  return bare.replace(ARTICLES, '').trim()
+  return tidy(s).replace(ARTICLES, '').trim()
 }
 
 /** "la maison / le foyer" of "huis, woning" → meerdere aanvaarde antwoorden. */
@@ -87,6 +92,9 @@ function distance(a: string, b: string, max: number): number {
 
 export type Grade = 'goed' | 'accent' | 'bijna' | 'fout'
 
+/** Hoeveel tekens een antwoord mag afwijken en toch 'bijna' heten. Langer = meer speling. */
+const speling = (s: string) => Math.min(2, Math.max(1, Math.floor(normalize(s).length / 6)))
+
 /**
  * 'goed'   — exact (na normaliseren)
  * 'accent' — alleen accenten verschillen; telt als goed, maar we tonen de juiste spelling
@@ -102,8 +110,10 @@ export function grade(given: string, expected: string): Grade {
     const exact = options.some((o) => normalizeKeepAccents(o) === normalizeKeepAccents(given))
     return exact ? 'goed' : 'accent'
   }
-  // ponytail: afstand 1 volstaat; te ruim en "grand"/"gros" gaan voor elkaar door.
-  if (options.some((o) => distance(normalize(o), got, 1) <= 1)) return 'bijna'
+  // Eén misgehoord woord in "avoir besoin de" is iets anders dan één letter in "eau".
+  // Dit verschuift alleen fout → bijna: bijna telt nog steeds niet als juist.
+  // ponytail: ruwe vuistregel, fijner afstemmen als er te veel of te weinig doorglipt.
+  if (options.some((o) => distance(normalize(o), got, speling(o)) <= speling(o))) return 'bijna'
   return 'fout'
 }
 
